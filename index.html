@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoalPilot — AI Goal-Based Financial Butler</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --teal: #0D9488;
+    --lteal: #99E6DF;
+    --gold: #F59E0B;
+    --white: #FFFFFF;
+    --offwhite: #F0FAFA;
+    --gray: #64748B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Sora', sans-serif; background: var(--navy); color: var(--white); overflow-x: hidden; }
+
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 3rem;
+    background: rgba(11,37,69,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(13,148,136,0.2);
+  }
+  .logo { font-size: 1.4rem; font-weight: 800; color: var(--teal); letter-spacing: -0.5px; }
+  .logo span { color: var(--white); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--teal); }
+
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 6rem 3rem 3rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at 70% 50%, rgba(13,148,136,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(245,158,11,0.08) 0%, transparent 50%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.04;
+    background-image: linear-gradient(var(--teal) 1px, transparent 1px),
+                      linear-gradient(90deg, var(--teal) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 700px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(13,148,136,0.15); border: 1px solid rgba(13,148,136,0.4);
+    padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.75rem;
+    font-weight: 600; color: var(--lteal); letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; line-height: 1.1;
+    letter-spacing: -1px; margin-bottom: 1rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .hero h1 .accent { color: var(--teal); }
+  .hero h1 .gold { color: var(--gold); }
+  .hero-sub {
+    font-size: 1.1rem; color: rgba(255,255,255,0.65); line-height: 1.7;
+    max-width: 520px; margin-bottom: 2rem;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+  .hero-cta {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .btn-primary {
+    background: var(--teal); color: var(--white);
+    padding: 0.85rem 2rem; border-radius: 8px;
+    font-weight: 700; font-size: 0.9rem; text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(13,148,136,0.35);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(13,148,136,0.5); }
+  .btn-outline {
+    border: 1.5px solid rgba(255,255,255,0.25); color: var(--white);
+    padding: 0.85rem 2rem; border-radius: 8px;
+    font-weight: 600; font-size: 0.9rem; text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--teal); background: rgba(13,148,136,0.1); }
+  .hero-visual {
+    position: absolute; right: 3rem; top: 50%; transform: translateY(-50%);
+    z-index: 1; display: flex; flex-direction: column; gap: 1rem;
+    animation: fadeIn 1s 0.5s ease both;
+  }
+  .flow-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(13,148,136,0.3);
+    border-left: 3px solid var(--teal);
+    padding: 0.9rem 1.4rem; border-radius: 8px; width: 220px;
+    backdrop-filter: blur(8px);
+  }
+  .flow-card .fc-label { font-size: 0.65rem; color: var(--lteal); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; font-family: 'Space Mono', monospace; }
+  .flow-card .fc-title { font-size: 0.95rem; font-weight: 700; }
+  .flow-arrow { text-align: center; color: var(--teal); font-size: 1.2rem; }
+
+  section { padding: 5rem 3rem; }
+  .section-label { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--teal); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .section-title { font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; }
+  .section-sub { color: rgba(255,255,255,0.6); font-size: 1rem; line-height: 1.7; max-width: 540px; }
+
+  .problem { background: var(--offwhite); color: var(--navy); }
+  .problem .section-title { color: var(--navy); }
+  .problem .section-sub { color: var(--gray); }
+  .problem .section-label { color: var(--teal); }
+  .problems-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+  .prob-card {
+    background: white; border-radius: 12px; padding: 1.8rem;
+    border-left: 4px solid var(--teal);
+    box-shadow: 0 4px 24px rgba(11,37,69,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .prob-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(11,37,69,0.15); }
+  .prob-card .pc-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .prob-card h3 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 0.6rem; }
+  .prob-card p { font-size: 0.88rem; color: var(--gray); line-height: 1.6; }
+
+  .solution { background: var(--navy); }
+  .engines { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .engine-card {
+    border-radius: 12px; padding: 2rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .engine-card:hover { transform: translateY(-4px); }
+  .engine-card.e1 { background: var(--teal); }
+  .engine-card.e2 { background: #0B7A6E; }
+  .engine-card.e3 { background: #163A5F; border: 1px solid rgba(13,148,136,0.4); }
+  .engine-num { font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: var(--gold); margin-bottom: 0.5rem; opacity: 0.9; }
+  .engine-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem; }
+  .engine-card p { font-size: 0.85rem; color: rgba(255,255,255,0.8); line-height: 1.6; }
+
+  .biz { background: #081A36; }
+  .biz-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .biz-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    border-top: 3px solid var(--teal);
+    border-radius: 12px; padding: 1.8rem;
+    transition: background 0.2s;
+  }
+  .biz-card:hover { background: rgba(13,148,136,0.08); }
+  .biz-num { font-family: 'Space Mono', monospace; color: var(--gold); font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+  .biz-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.6rem; }
+  .biz-card p { font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+  .rev-bar { margin-top: 3rem; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem 2rem; }
+  .rev-bar h4 { font-size: 0.75rem; font-family: 'Space Mono', monospace; color: var(--lteal); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+  .rev-track { display: flex; border-radius: 8px; overflow: hidden; height: 44px; }
+  .rev-seg { display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+
+  .market { background: var(--offwhite); color: var(--navy); }
+  .market .section-title { color: var(--navy); }
+  .market .section-sub { color: var(--gray); }
+  .market .section-label { color: var(--teal); }
+  .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 3rem; align-items: start; }
+  .market-circle-wrap { position: relative; width: 280px; height: 280px; margin: 0 auto; }
+  .mc { position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .mc1 { width: 280px; height: 280px; top:0; left:0; background: rgba(13,148,136,0.12); border: 2px solid rgba(13,148,136,0.3); }
+  .mc2 { width: 196px; height: 196px; top:42px; left:42px; background: rgba(13,148,136,0.18); border: 2px solid rgba(13,148,136,0.5); }
+  .mc3 { width: 116px; height: 116px; top:82px; left:82px; background: var(--teal); }
+  .mc-label { position: absolute; font-weight: 700; color: var(--navy); font-size: 0.85rem; }
+  .ml1 { top: 12px; left: 50%; transform: translateX(-50%); }
+  .ml2 { top: 58px; left: 50%; transform: translateX(-50%); }
+  .ml3 { top: 122px; left: 50%; transform: translateX(-50%); color: white; font-size: 0.95rem; }
+  .market-rows { display: flex; flex-direction: column; gap: 1rem; }
+  .market-row {
+    background: white; border-radius: 10px; padding: 1.2rem 1.4rem;
+    border-left: 4px solid;
+    box-shadow: 0 2px 12px rgba(11,37,69,0.06);
+  }
+  .market-row:nth-child(1) { border-color: #99c4ef; }
+  .market-row:nth-child(2) { border-color: var(--teal); }
+  .market-row:nth-child(3) { border-color: var(--navy); }
+  .mr-label { font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700; color: var(--gray); letter-spacing: 0.1em; }
+  .mr-title { font-size: 0.95rem; font-weight: 700; color: var(--navy); margin: 0.2rem 0; }
+  .mr-desc { font-size: 0.82rem; color: var(--gray); }
+
+  .team { background: var(--navy); }
+  .team-card {
+    margin-top: 3rem; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(13,148,136,0.3); border-radius: 16px;
+    padding: 2.5rem; display: flex; gap: 3rem; align-items: flex-start;
+  }
+  .team-avatar {
+    width: 100px; height: 100px; border-radius: 50%; flex-shrink: 0;
+    background: var(--teal); display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; font-weight: 800; border: 3px solid rgba(153,230,223,0.4);
+  }
+  .team-info h3 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+  .team-info .role { color: var(--gold); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 0.5rem; font-family: 'Space Mono', monospace; }
+  .team-info .school { color: var(--lteal); font-size: 0.9rem; margin-bottom: 1.2rem; }
+  .skills-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .skill-tag {
+    background: rgba(13,148,136,0.15); border: 1px solid rgba(13,148,136,0.3);
+    padding: 0.35rem 0.9rem; border-radius: 100px; font-size: 0.78rem; color: var(--lteal); font-weight: 600;
+  }
+  .seeking { margin-top: 2rem; background: rgba(255,255,255,0.03); border-radius: 10px; padding: 1.2rem 1.5rem; }
+  .seeking h4 { font-size: 0.75rem; color: var(--lteal); font-family: 'Space Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .seeking-tags { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .seek-tag { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--gold); padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+
+  .cta-section {
+    background: linear-gradient(135deg, #0B2545 0%, #0D4A42 100%);
+    text-align: center; padding: 6rem 3rem;
+  }
+  .cta-section h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 800; margin-bottom: 1rem; }
+  .cta-section p { color: rgba(255,255,255,0.65); font-size: 1rem; max-width: 480px; margin: 0 auto 2rem; line-height: 1.7; }
+
+  footer { background: #060F1E; padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); }
+  .footer-brand { font-weight: 800; color: var(--teal); font-size: 1.1rem; }
+  .footer-info { font-size: 0.8rem; color: rgba(255,255,255,0.35); text-align: right; line-height: 1.6; }
+
+  @keyframes fadeUp { from { opacity:0; transform: translateY(24px); } to { opacity:1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  @media (max-width: 900px) {
+    .hero-visual { display: none; }
+    .problems-grid, .engines, .biz-grid { grid-template-columns: 1fr; }
+    .market-grid { grid-template-columns: 1fr; }
+    .team-card { flex-direction: column; }
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 3.5rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Goal<span>Pilot</span></div>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#business">Business</a></li>
+    <li><a href="#market">Market</a></li>
+    <li><a href="#team">Team</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">🚀 Startup World Cup 2025 — Hsinchu</div>
+    <h1>Turning Life Goals into<br><span class="accent">Automated</span><br><span class="gold">Financial Actions</span></h1>
+    <p class="hero-sub">GoalPilot is an AI-powered financial butler that transforms your life goals into automated investment, savings, and FX execution strategies.</p>
+    <div class="hero-cta">
+      <a href="#solution" class="btn-primary">See How It Works</a>
+      <a href="#team" class="btn-outline">About the Founder</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="flow-card">
+      <div class="fc-label">① Goal Engine</div>
+      <div class="fc-title">🎯 Input Your Goals</div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-card">
+      <div class="fc-label">② Planning Engine</div>
+      <div class="fc-title">📊 Dynamic Strategy</div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-card">
+      <div class="fc-label">③ Execution Engine ⭐</div>
+      <div class="fc-title">⚙️ Auto-Execute</div>
+    </div>
+  </div>
+</section>
+
+<section class="problem" id="problem">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-title">People fail to execute their financial plans</h2>
+  <p class="section-sub">Even when they know they should manage money better, emotional decisions and disconnected tools get in the way.</p>
+  <div class="problems-grid">
+    <div class="prob-card">
+      <div class="pc-icon">🔗</div>
+      <h3>Disconnected from Real Goals</h3>
+      <p>Users have clear goals — study abroad, buy a house, travel — but don't know how much to save, when to invest, or how to manage risk.</p>
+    </div>
+    <div class="prob-card">
+      <div class="pc-icon">📱</div>
+      <h3>Existing Tools Only Inform</h3>
+      <p>Banking apps, robo-advisors, and budgeting tools only give recommendations. Users still have to make decisions and execute manually.</p>
+    </div>
+    <div class="prob-card">
+      <div class="pc-icon">😰</div>
+      <h3>Decisions Are Emotional</h3>
+      <p>Buying FX at peak exchange rates, panic-selling during crashes, spending money originally reserved for future goals.</p>
+    </div>
+  </div>
+</section>
+
+<section class="solution" id="solution">
+  <div class="section-label">The Solution</div>
+  <h2 class="section-title">GoalPilot — Your AI Financial Butler</h2>
+  <p class="section-sub">Three integrated engines that take you from setting a goal to automatically executing the financial strategy.</p>
+  <div class="engines">
+    <div class="engine-card e1">
+      <div class="engine-num">01</div>
+      <h3>Goal Engine</h3>
+      <p>You input a goal — study abroad, buy a home, save for a wedding. GoalPilot auto-calculates required capital, time horizon, risk level, and monthly targets.</p>
+    </div>
+    <div class="engine-card e2">
+      <div class="engine-num">02</div>
+      <h3>Planning Engine</h3>
+      <p>Dynamically generates monthly saving plans, investment allocation, FX strategies, and risk adjustments based on market conditions and your cash flow.</p>
+    </div>
+    <div class="engine-card e3">
+      <div class="engine-num">03</div>
+      <h3>Execution Engine ⭐</h3>
+      <p>Automatically executes ETF investments, currency exchanges, savings allocation, and emergency reserve management — no manual action needed.</p>
+    </div>
+  </div>
+</section>
+
+<section class="biz" id="business">
+  <div class="section-label">Business Model</div>
+  <h2 class="section-title">Scalable Multi-Revenue Model</h2>
+  <p class="section-sub">Three complementary revenue streams designed for long-term growth and recurring income.</p>
+  <div class="biz-grid">
+    <div class="biz-card">
+      <div class="biz-num">①</div>
+      <h3>Subscription (Freemium)</h3>
+      <p>Free: goal planning, tracking, basic recommendations.<br>Premium: automated execution, smart FX, AI optimization, dynamic allocation.</p>
+    </div>
+    <div class="biz-card">
+      <div class="biz-num">②</div>
+      <h3>Financial Commission</h3>
+      <p>Revenue sharing from ETF investments, mutual funds, currency exchange, and wealth management products executed through the platform.</p>
+    </div>
+    <div class="biz-card">
+      <div class="biz-num">③</div>
+      <h3>B2B SaaS / API</h3>
+      <p>License GoalPilot's automation engine to banks, digital banks, securities firms, and wealth management platforms.</p>
+    </div>
+  </div>
+  <div class="rev-bar">
+    <h4>Revenue Mix Target</h4>
+    <div class="rev-track">
+      <div class="rev-seg" style="width:40%;background:#0D9488;color:white;">40% Subscription</div>
+      <div class="rev-seg" style="width:40%;background:#0B7A6E;color:white;">40% Commission</div>
+      <div class="rev-seg" style="width:20%;background:#0B2545;color:#99E6DF;border:1px solid rgba(13,148,136,0.4);">20% B2B</div>
+    </div>
+  </div>
+</section>
+
+<section class="market" id="market">
+  <div class="section-label">Market Opportunity</div>
+  <h2 class="section-title">Large, Growing WealthTech Market</h2>
+  <p class="section-sub">A multi-billion dollar global opportunity, with our initial focus on Taiwan's digitally-native young investors.</p>
+  <div class="market-grid">
+    <div>
+      <div class="market-circle-wrap">
+        <div class="mc mc1"></div>
+        <div class="mc mc2"></div>
+        <div class="mc mc3"></div>
+        <span class="mc-label ml1">TAM — Global WealthTech</span>
+        <span class="mc-label ml2">SAM — APAC</span>
+        <span class="mc-label ml3" style="color:white;">SOM</span>
+      </div>
+    </div>
+    <div class="market-rows">
+      <div class="market-row">
+        <div class="mr-label">TAM</div>
+        <div class="mr-title">Global WealthTech &amp; FinTech</div>
+        <div class="mr-desc">Multi-billion-dollar market driven by AI adoption and digital finance growth worldwide.</div>
+      </div>
+      <div class="market-row">
+        <div class="mr-label">SAM</div>
+        <div class="mr-title">APAC Digital Wealth Management</div>
+        <div class="mr-desc">Growing retail investing, digital banking expansion, and rising overseas education demand across Asia-Pacific.</div>
+      </div>
+      <div class="market-row">
+        <div class="mr-label">SOM</div>
+        <div class="mr-title">Taiwan — Young Adults 18–30</div>
+        <div class="mr-desc">First-time investors and digitally-native financial users as our initial beachhead market.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="team" id="team">
+  <div class="section-label">Team</div>
+  <h2 class="section-title">Interdisciplinary FinTech Founder</h2>
+  <p class="section-sub">Built at the intersection of quantitative finance, data analytics, and AI product design.</p>
+  <div class="team-card">
+    <div class="team-avatar">GP</div>
+    <div class="team-info" style="flex:1;">
+      <h3>[Your Name]</h3>
+      <div class="role">Founder &amp; CEO</div>
+      <div class="school">🎓 National Tsing Hua University — Quantitative Finance</div>
+      <div class="skills-row">
+        <span class="skill-tag">Financial Engineering</span>
+        <span class="skill-tag">Asset Allocation</span>
+        <span class="skill-tag">Risk Management</span>
+        <span class="skill-tag">Behavioral Finance</span>
+        <span class="skill-tag">AI-Driven Finance</span>
+        <span class="skill-tag">FinTech Research</span>
+      </div>
+      <div class="seeking">
+        <h4>🔍 Currently Seeking</h4>
+        <div class="seeking-tags">
+          <span class="seek-tag">⚙️ Software Engineer</span>
+          <span class="seek-tag">🤖 AI / ML Developer</span>
+          <span class="seek-tag">🎨 UI/UX Designer</span>
+          <span class="seek-tag">🏦 Banking Partnership</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2>Ready to Automate Your Financial Future?</h2>
+  <p>GoalPilot is currently in MVP development. We're raising pre-seed funding and looking for early partners and co-founders.</p>
+  <a href="mailto:your@email.com" class="btn-primary">Get in Touch</a>
+</section>
+
+<footer>
+  <div class="footer-brand">GoalPilot</div>
+  <div class="footer-info">
+    AI Goal-Based Financial Butler<br>
+    National Tsing Hua University · Startup World Cup 2025
+  </div>
+</footer>
+
+</body>
+</html>
